@@ -36,7 +36,15 @@ export default async (req, res) => {
       region.currency_code
     )
 
-    res.status(200).json({ paymentMethods: data })
+    const { paymentMethods, groups } = data
+
+    const methods = paymentMethods.filter((pm) =>
+      allowedMethods.includes(pm.type)
+    )
+
+    res
+      .status(200)
+      .json({ paymentMethods: { groups, paymentMethods: methods } })
   } catch (err) {
     throw err
   }

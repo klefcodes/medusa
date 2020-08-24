@@ -1,11 +1,15 @@
 import _ from "lodash"
 import { PaymentService } from "medusa-interfaces"
+import axios from "axios"
+import fs from "fs"
 
 class ApplePayAdyenService extends PaymentService {
   static identifier = "applepayAdyen"
 
-  constructor({ adyenService }) {
+  constructor({ adyenService }, options) {
     super()
+
+    this.options_ = options
 
     this.adyenService_ = adyenService
   }
@@ -30,6 +34,23 @@ class ApplePayAdyenService extends PaymentService {
     return {}
   }
 
+  async validateSession(validationUrl) {
+    const uri = `https://${validationUrl}/paymentSession`
+
+    const cert = fs.readFileSync("./apple-pay-cert.pem", "utf-8")
+
+    const request = {
+      merchantIdentifier: this.options.applepayMerchantId,
+      displayName: this.options.applepayDisplayName,
+      initiative: "web",
+      initiativeContext: this.options.applepayDomainName,
+      key: cert,
+      cert,
+    }
+
+    return axios.post(uri, request)
+  }
+
   async authorizePayment(cart, paymentMethod) {
     return this.adyenService_.authorizePayment(cart, paymentMethod)
   }
@@ -47,27 +68,15 @@ class ApplePayAdyenService extends PaymentService {
   }
 
   async capturePayment(data) {
-    try {
-      return this.adyenService_.capturePayment(data)
-    } catch (error) {
-      throw error
-    }
+    return this.adyenService_.capturePayment(data)
   }
 
   async refundPayment(data) {
-    try {
-      return this.adyenService_.refundPayment(data)
-    } catch (error) {
-      throw error
-    }
+    return this.adyenService_.refundPayment(data)
   }
 
   async cancelPayment(data) {
-    try {
-      return this.adyenService_.cancelPayment(data)
-    } catch (error) {
-      throw error
-    }
+    return this.adyenService_.cancelPayment(data)
   }
 }
 

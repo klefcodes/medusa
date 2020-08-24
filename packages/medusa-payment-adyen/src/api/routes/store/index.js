@@ -50,5 +50,11 @@ export default (app, rootDirectory) => {
     middlewares.wrap(require("./check-payment-status").default)
   )
 
+  route.post(
+    "/apple-pay/validate-url",
+    bodyParser.json(),
+    middlewares.wrap(require("./validate-url").default)
+  )
+
   return app
 }
