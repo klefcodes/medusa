@@ -7,7 +7,11 @@ class SlackService extends BaseService {
    * @param {Object} options - options defined in `medusa-config.js`
    *    {
    *      slack_url: "https://hooks.slack.com/services/...",
-   *      admin_orders_url: "https:..../orders"
+   *      admin_orders_url: "https:..../orders",
+   *
+   *      This option can be used to omit info in the Slack notification.
+   *      All fields added here, will not be included.
+   *      omit_fields: ["shipping_address", ... ]
    *    }
    */
   constructor({ orderService, totalsService, regionService }, options) {
@@ -19,7 +23,7 @@ class SlackService extends BaseService {
 
     this.regionService_ = regionService
 
-    this.options_ = options
+    this.options_ = { ...options, omit_fields: options.omit_fields || [] }
   }
 
   async orderNotification(orderId) {
@@ -43,19 +47,6 @@ class SlackService extends BaseService {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Customer*\n${order.shipping_address.first_name} ${
-            order.shipping_address.last_name
-          }\n${order.email}\n*Destination*\n${
-            order.shipping_address.address_1
-          }\n${
-            order.shipping_address.city
-          }, ${order.shipping_address.country_code.toUpperCase()}`,
-        },
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
           text: `*Subtotal*\t${subtotal.toFixed(2)} ${
             order.currency_code
           }\n*Shipping*\t${shippingTotal.toFixed(2)} ${
@@ -69,12 +60,32 @@ class SlackService extends BaseService {
       },
     ]
 
+    if (!this.options_.omit_fields.includes("shipping_address")) {
+      blocks.push({
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*Customer*\n${order.shipping_address.first_name} ${
+            order.shipping_address.last_name
+          }\n${order.email}\n*Destination*\n${
+            order.shipping_address.address_1
+          }\n${
+            order.shipping_address.city
+          }, ${order.shipping_address.country_code.toUpperCase()}`,
+        },
+      })
+    }
+
     order.discounts.forEach((d) => {
       blocks.push({
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*Promo Code*\t${d.code} ${d.discount_rule.value}${d.discount_rule.type === "percentage" ? "%" : ` ${order.currency_code}`}`,
+          text: `*Promo Code*\t${d.code} ${d.discount_rule.value}${
+            d.discount_rule.type === "percentage"
+              ? "%"
+              : ` ${order.currency_code}`
+          }`,
         },
       })
     })
@@ -106,9 +117,8 @@ class SlackService extends BaseService {
         line.accessory = {
           type: "image",
           alt_text: "Item",
-          image_url: url
+          image_url: url,
         }
-
       }
 
       blocks.push(line)
