@@ -61,6 +61,7 @@ class ProductVariantService extends BaseService {
     })
 
     cloned.transactionManager_ = transactionManager
+    cloned.manager_ = transactionManager
 
     return cloned
   }
