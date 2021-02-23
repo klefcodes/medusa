@@ -81,6 +81,7 @@ class EventBusService {
     )
 
     cloned.transactionManager_ = transactionManager
+    cloned.manager_ = transactionManager
     cloned.queue_ = this.queue_
 
     return cloned
